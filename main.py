@@ -71,7 +71,7 @@ def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj):
     # print('K\n',K)
     return(K)
 
-# Parte 1 - Entrada de dados------------------------------------------------------
+# Entrada de dados-----------------------------------------------------------------
 # Coordenadas dos nós
 coord = np.transpose(np.array([[0,0],[3,0],[0,3],[3,3],[6,3]]))
 
@@ -89,6 +89,16 @@ no_preso = [1,3]
 # Aplicação de força
 
 force = np.transpose(np.array([[0,0],[0,0],[0,0],[0,0],[0,-40]]))
+
+# Controle do gráfico
+
+# Plotar gráfico (y/n)
+
+plt_q = 'y'
+
+# Fator de aumento do dano (para efeitos de visualização)
+
+fator = 5 
 
 # Não tem interação do usuário a partir desse ponto--------------------------------
 
@@ -113,10 +123,24 @@ IDM = matriz_IDM(ID)
 # print('Ke\n',K)
 # print(size_ID)
 # print(IDM)
+# print('coord\n',coord)
+# print('inci\n',inci)
+# print('força',force)
+
 
 # Vetores de força
 
-# Montagem computacionalmente eficiente
+F = np.zeros((IDM[size_ID-1,1]))    #pre-alocagem (-1 pq começa na posição zero)
+for i in range(size_ID):
+    for j in range(2):
+        eq = IDM[i][j]
+        if eq != 0:
+            F[eq-1] = force[j][i]   #-1 pq começa na posição zero
+
+# Controle de qualidade
+# print('F',F)
+
+# Montagem do sistema (forma eficiente)-------------------------------------------
 
 neq = 2*(size_ID-np.size(no_preso,0)) #número de equações
 K = np.zeros((neq,neq))     # pre-alocagem com zeros
@@ -166,18 +190,31 @@ for e in range(size_ID+1):
                         coord[1][inci[1][e]-1])
 
                         # Controle de qualidade
-                        print(l,m,ll,ml)
+                        # print(l,m,ll,ml)
                         
                         if m != 0:
                             K[l-1][m-1] = K[l-1][m-1] + Ke[ll-1][ml-1]
 
 # Controle de qualidade
-print('K\n',K)
+# print('K\n',K)
 
+# Solução do problema ------------------------------------------------------------
 
+U = np.matmul(np.linalg.inv(K),F)
 
+V = np.zeros((size_ID,2))
+for i in range(size_ID):
+    for j in range(2): #graus de liberdade
+        eq = IDM[i][j]
+        if eq != 0:
+            V[i][j] = U[eq-1]
 
 # Controle de qualidade
-# print('coord\n',coord)
-# print('inci\n',inci)
-# print('força',force)
+# print('U\n',U)
+print('V\n',V)
+
+# Calculo do sistema deformado----------------------------------------------------
+
+coord_f = coord + fator*V.transpose()
+
+print(coord_f)
