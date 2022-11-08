@@ -1,3 +1,6 @@
+# Code by Kort, nov. 8, 2022
+# Available at github/lukekort
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -296,22 +299,3 @@ if plt_q.lower() == 'y':
     plt.ylabel('Tensão [1e3]')
     plt.bar_label(plt.bar(Fe[:,0],Fe[:,1],1))
     plt.show()
-
-# Plotagem de gráficos (Não implementado)-----------------------------------------
-
-# xy1 = np.zeros((size_ID+1,2))
-# xy2 = np.zeros((size_ID+1,2))
-
-# if plt_q.lower() == 'y':
-#     for i in range(size_ID+1):
-#         a = inci[0][i]-1
-#         b = inci[1][i]-1
-#         xy1[i][0] = coord[0][a]
-#         xy1[i][1] = coord[1][a]
-#         xy2[i][0] = coord[0][b]
-#         xy2[i][1] = coord[1][b]
-    
-# Controle de qualidade
-# print('xy1\n',xy1,'\nxy2\n',xy2)
-# plt.plot(xy1[:,0],xy1[:,1])
-# plt.show()
