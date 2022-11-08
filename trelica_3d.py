@@ -5,7 +5,7 @@ def matriz_ID(nos_presos,n_nos):
     # Essa função monda a matriz os dos restritos (1) e irrestritos (0)
     # Entradas: nós restritos, número de nós
     
-    ID = np.zeros((n_nos,2)) # pre-alocagem com zeros
+    ID = np.zeros((n_nos,n_gl)) # pre-alocagem com zeros
     for i in range(n_nos):
         if (i+1) in nos_presos:
             ID[i,0] = 1
@@ -29,7 +29,7 @@ def matriz_propriedades(E,A,n_el):
     return(prop)
 
 def matriz_IDM(ID):
-    IDM = np.zeros((size_ID,2),int) #pre-alocagem com zeros
+    IDM = np.zeros((size_ID,n_gl),int) #pre-alocagem com zeros
     neq = 0
     for i in range(size_ID):
         for j in range(2):
@@ -102,6 +102,7 @@ fator = 5
 # Não tem interação do usuário a partir desse ponto--------------------------------
 
 # Montagem das matrizes
+n_gl = np.size(coord,0) #Número de graus de liberdade
 size_ID = np.size(coord,1)    # número de nós(colunas de coord)
 size_inci = np.size(inci,1)  # número de elementos (colunas de inci)
 ID = matriz_ID(no_preso,size_ID) #nós com restrição          
@@ -121,6 +122,7 @@ IDM,neq = matriz_IDM(ID)
 #     coord[1][inci[0][e]-1],
 #     coord[1][inci[1][e]-1])
 # print('Ke\n',K)
+# print('gl',n_gl)
 # print('size_ID',size_ID)
 # print('size_inci', size_inci)
 # print('ID\n', ID)
@@ -135,7 +137,7 @@ IDM,neq = matriz_IDM(ID)
 
 F = np.zeros((neq,1))    #pre-alocagem (-1 pq começa na posição zero)
 for i in range(size_ID):
-    for j in range(2):
+    for j in range(n_gl):
         eq = IDM[i][j]
         if eq != 0:
             F[eq-1] = force[j][i]   #-1 pq começa na posição zero
@@ -159,7 +161,7 @@ for e in range(size_inci):
         # Controle de qualidade
         # print(no)
         
-        for i in range(2):  # Range até o número de gl por nó
+        for i in range(n_gl):  # Range até o número de gl por nó
             eq = IDM[no-1][i]
             LM[i][j] = eq
 
@@ -169,7 +171,7 @@ for e in range(size_inci):
 
     for j in range(1,3):
         ii = 2*(j-1)
-        for i in range(1,3):
+        for i in range(1,n_gl+1):
             l = LM[i-1][j-1]
 
             # Controle de qualidade
@@ -179,7 +181,7 @@ for e in range(size_inci):
             for n in range(1,3):
                 if l != 0:
                     jj = 2*(n-1)
-                    for k in range(1,3):
+                    for k in range(1,n_gl+1):
                         m = LM[k-1][n-1]
                         ml = jj + k
                         Ke = matriz_elementar(
@@ -243,25 +245,28 @@ for i in range(size_inci):
 # Controle de qualidade
 # print(Fe)
 
-plt.title('Força em cada elemento')
-plt.xlabel('N° do elemento')
-plt.ylabel('Força em N')
-plt.bar_label(plt.bar(Fe[:,0],Fe[:,1]))
-plt.show()
+if plt_q.lower() == 'y':
+    plt.title('Força em cada elemento')
+    plt.xlabel('N° do elemento')
+    plt.ylabel('Força em N')
+    plt.bar_label(plt.bar(Fe[:,0],Fe[:,1]))
+    plt.show()
 
 # Plotagem de gráficos (Não implementado)-----------------------------------------
 
 # xy1 = np.zeros((size_ID+1,2))
 # xy2 = np.zeros((size_ID+1,2))
 
-# for i in range(size_ID+1):
-#     a = inci[0][i]-1
-#     b = inci[1][i]-1
-#     xy1[i][0] = coord[0][a]
-#     xy1[i][1] = coord[1][a]
-#     xy2[i][0] = coord[0][b]
-#     xy2[i][1] = coord[1][b]
+# if plt_q.lower() == 'y':
+#     for i in range(size_ID+1):
+#         a = inci[0][i]-1
+#         b = inci[1][i]-1
+#         xy1[i][0] = coord[0][a]
+#         xy1[i][1] = coord[1][a]
+#         xy2[i][0] = coord[0][b]
+#         xy2[i][1] = coord[1][b]
     
-# # print('xy1\n',xy1,'\nxy2\n',xy2)
+# Controle de qualidade
+# print('xy1\n',xy1,'\nxy2\n',xy2)
 # plt.plot(xy1[:,0],xy1[:,1])
 # plt.show()
