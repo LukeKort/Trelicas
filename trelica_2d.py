@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def matriz_ID(nos_presos,n_nos):
     # Essa função monda a matriz os dos restritos (1) e irrestritos (0)
@@ -211,10 +212,54 @@ for i in range(size_ID):
 
 # Controle de qualidade
 # print('U\n',U)
-print('V\n',V)
+# print('V\n',V)
 
 # Calculo do sistema deformado----------------------------------------------------
 
 coord_f = coord + fator*V.transpose()
 
-print(coord_f)
+# Controle de qualidade
+# print(coord_f)
+
+# Carregamento interno------------------------------------------------------------
+
+Fe = np.zeros((size_ID+1,2))
+for i in range(size_ID+1):
+    noI = inci[0][i] - 1
+    noJ = inci[1][i] - 1
+    xI = coord[0][noI]
+    xJ = coord[0][noJ]
+    yI = coord[1][noI]
+    yJ = coord[1][noJ]
+    l = np.sqrt((xJ-xI)**2 + (yJ-yI)**2)
+    cos_theta = (xJ-xI)/l
+    sin_theta = (yJ-yI)/l
+    sigma_e = -cos_theta*V[noI][0] - sin_theta*V[noI][1] + cos_theta*V[noJ][0] + sin_theta*V[noJ][1]
+    Fe[i][0] = i + 1
+    Fe[i][1] = (E*A/l)*sigma_e
+
+# Controle de qualidade
+# print(Fe)
+
+plt.title('Força em cada elemento')
+plt.xlabel('N° do elemento')
+plt.ylabel('Força em N')
+plt.bar_label(plt.bar(Fe[:,0],Fe[:,1]))
+plt.show()
+
+# Plotagem de gráficos (Não implementado)-----------------------------------------
+
+# xy1 = np.zeros((size_ID+1,2))
+# xy2 = np.zeros((size_ID+1,2))
+
+# for i in range(size_ID+1):
+#     a = inci[0][i]-1
+#     b = inci[1][i]-1
+#     xy1[i][0] = coord[0][a]
+#     xy1[i][1] = coord[1][a]
+#     xy2[i][0] = coord[0][b]
+#     xy2[i][1] = coord[1][b]
+    
+# # print('xy1\n',xy1,'\nxy2\n',xy2)
+# plt.plot(xy1[:,0],xy1[:,1])
+# plt.show()
