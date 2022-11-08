@@ -42,7 +42,7 @@ def matriz_IDM(ID):
     # print('IDM\n',IDM)
     return(IDM,neq)
 
-def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj):
+def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj,coordzi,coordzj):
     # Essa função monda a matriz elementar
     # Entradas:Módulo de Young,
     #     Área da seção transveral
@@ -53,13 +53,29 @@ def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj):
     #     coordenada y do nó inicial
     #     coordenada y do nó final
 
-    l = np.sqrt((coordxj-coordxi)**2 + (coordyj-coordyi)**2)
-    cos_theta = (coordxj-coordxi)/l
-    sin_theta = (coordyj-coordyi)/l
-    R = np.array([[cos_theta**2, cos_theta*sin_theta, -cos_theta**2, -cos_theta*sin_theta],
-           [cos_theta*sin_theta, sin_theta**2, -cos_theta*sin_theta, -sin_theta**2],
-           [-cos_theta**2, -cos_theta*sin_theta, cos_theta**2, cos_theta*sin_theta],
-           [-cos_theta*sin_theta, -sin_theta**2, cos_theta*sin_theta, sin_theta**2]])
+    if n_gl == 2:
+        l = np.sqrt((coordxj-coordxi)**2 + (coordyj-coordyi)**2)
+        cos_theta = (coordxj-coordxi)/l
+        sin_theta = (coordyj-coordyi)/l
+        R = np.array(
+            [[cos_theta**2, cos_theta*sin_theta, -cos_theta**2, -cos_theta*sin_theta],
+            [cos_theta*sin_theta, sin_theta**2, -cos_theta*sin_theta, -sin_theta**2],
+            [-cos_theta**2, -cos_theta*sin_theta, cos_theta**2, cos_theta*sin_theta],
+            [-cos_theta*sin_theta, -sin_theta**2, cos_theta*sin_theta, sin_theta**2]]
+            )
+    if n_gl == 3:
+        l = np.sqrt((coordxj-coordxi)**2 + (coordyj-coordyi)**2 + (coordzj-coordzi)**2)
+        c_x = (coordxj-coordxi)/l
+        c_y = (coordyj-coordyi)/l
+        c_z = (coordzj-coordzi)/l
+        R = np.array(
+            [[c_x**2, c_x*c_y, c_x*c_z, - c_x**2, -c_x*c_y, -c_x*c_z],
+            [c_x*c_y, c_y**2, c_y*c_z, -c_x*c_y, -c_y**2, -c_y*c_z],
+            [c_x*c_z, -c_x**2, c_z**2, -c_x*c_z, -c_y*c_z, -c_z**2],
+            [-c_x**2, -c_x*c_y, -c_y*c_z, -c_x**2, c_x*c_y, c_x*c_z],
+            [-c_x*c_y, -c_y**2, -c_y*c_z, c_x*c_y, c_y**2, c_y*c_z],
+            [-c_x*c_z, -c_y*c_z, -c_z**2, c_x*c_z, c_y*c_z, c_z**2]])
+ 
     K = ((E*A)/l)*R
 
     # Controle de qualidade
@@ -184,6 +200,12 @@ for e in range(size_inci):
                     for k in range(1,n_gl+1):
                         m = LM[k-1][n-1]
                         ml = jj + k
+                        if n_gl == 2:
+                            coordzi = 1
+                            coordzj = 1
+                        else:
+                            coordzi = coord[2][inci[0][e]-1]
+                            coordzj = coord[2][inci[1][e]-1]
                         Ke = matriz_elementar(
                         prop[0][e],
                         prop[1][e],
@@ -192,7 +214,9 @@ for e in range(size_inci):
                         coord[0][inci[0][e]-1],
                         coord[0][inci[1][e]-1],
                         coord[1][inci[0][e]-1],
-                        coord[1][inci[1][e]-1])
+                        coord[1][inci[1][e]-1],
+                        coordzi,
+                        coordzj)
 
                         # Controle de qualidade
                         # print(l,m,ll,ml)
@@ -209,7 +233,7 @@ U = np.matmul(np.linalg.inv(K),F)
 
 V = np.zeros((size_ID,2))
 for i in range(size_ID):
-    for j in range(2): #graus de liberdade
+    for j in range(n_gl): #graus de liberdade
         eq = IDM[i][j]
         if eq != 0:
             V[i][j] = U[eq-1]
