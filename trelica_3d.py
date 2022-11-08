@@ -7,9 +7,15 @@ def matriz_ID(nos_presos,n_nos):
     
     ID = np.zeros((n_nos,n_gl)) # pre-alocagem com zeros
     for i in range(n_nos):
-        if (i+1) in nos_presos:
-            ID[i,0] = 1
-            ID[i,1] = 1
+        if n_gl == 2:
+            if (i+1) in nos_presos:
+                ID[i,0] = 1
+                ID[i,1] = 1
+        if n_gl == 3:
+            if (i+1) in nos_presos:
+                ID[i,0] = 1
+                ID[i,1] = 1
+                ID[i,2] = 1
 
     # Controle de qualidade
     # print('ID\n',ID)
@@ -32,7 +38,7 @@ def matriz_IDM(ID):
     IDM = np.zeros((size_ID,n_gl),int) #pre-alocagem com zeros
     neq = 0
     for i in range(size_ID):
-        for j in range(2):
+        for j in range(n_gl):
             aux = ID[i][j]
             if aux == 0:
                 neq = neq + 1
@@ -71,8 +77,8 @@ def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj,coordzi,coo
         R = np.array(
             [[c_x**2, c_x*c_y, c_x*c_z, - c_x**2, -c_x*c_y, -c_x*c_z],
             [c_x*c_y, c_y**2, c_y*c_z, -c_x*c_y, -c_y**2, -c_y*c_z],
-            [c_x*c_z, -c_x**2, c_z**2, -c_x*c_z, -c_y*c_z, -c_z**2],
-            [-c_x**2, -c_x*c_y, -c_y*c_z, -c_x**2, c_x*c_y, c_x*c_z],
+            [c_x*c_z, c_y*c_z, c_z**2, -c_x*c_z, -c_y*c_z, -c_z**2],
+            [-c_x**2, -c_x*c_y, -c_y*c_z, c_x**2, c_x*c_y, c_x*c_z],
             [-c_x*c_y, -c_y**2, -c_y*c_z, c_x*c_y, c_y**2, c_y*c_z],
             [-c_x*c_z, -c_y*c_z, -c_z**2, c_x*c_z, c_y*c_z, c_z**2]])
  
@@ -88,22 +94,22 @@ def matriz_elementar(E,A,inci1,inci2,coordxi,coordxj,coordyi,coordyj,coordzi,coo
 
 # Entrada de dados-----------------------------------------------------------------
 # Coordenadas dos nós
-coord = np.transpose(np.array([[0,0],[3,0],[0,3],[3,3],[6,3]]))
+coord = np.transpose(np.array([[4,4,3],[0,4,0],[0,4,6],[4,0,3],[8,-1,1]]))
 
 # Mapa dos nós em cada elemento
-inci = np.transpose(np.array([[1,2],[1,4],[3,4],[4,5],[2,4],[2,5]]))     
+inci = np.transpose(np.array([[1,2],[1,3],[1,4],[1,5]]))     
 
 # Módulo de young
-E = 1e6
+E = 210e6
 # Área da seção transversal
-A = 1e-2
+A = 1e-1
 
 # Nós presos (restritos)
-no_preso = [1,3]
+no_preso = [2,3,4,5]
 
 # Aplicação de força
 
-force = np.transpose(np.array([[0,0],[0,0],[0,0],[0,0],[0,-40]]))
+force = np.transpose(np.array([[0,-10e3,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]))
 
 # Controle do gráfico
 
@@ -163,9 +169,8 @@ for i in range(size_ID):
 
 # Montagem do sistema (forma eficiente)-------------------------------------------
 
-neq = 2*(size_ID-np.size(no_preso,0)) #número de equações
 K = np.zeros((neq,neq))     # pre-alocagem com zeros
-LM = np.zeros((2,2),int)      # pre-alocagem com zeros
+LM = np.zeros((n_gl,2),int)      # pre-alocagem com zeros
 
 # Controle de qualidade
 # print('neq\n',neq)
@@ -220,7 +225,7 @@ for e in range(size_inci):
 
                         # Controle de qualidade
                         # print(l,m,ll,ml)
-                        
+
                         if m != 0:
                             K[l-1][m-1] = K[l-1][m-1] + Ke[ll-1][ml-1]
 
@@ -231,16 +236,22 @@ for e in range(size_inci):
 
 U = np.matmul(np.linalg.inv(K),F)
 
-V = np.zeros((size_ID,2))
+# Controle de qualidade
+# print('U\n',U)
+
+V = np.zeros((size_ID,n_gl))
 for i in range(size_ID):
     for j in range(n_gl): #graus de liberdade
         eq = IDM[i][j]
         if eq != 0:
             V[i][j] = U[eq-1]
 
-# Controle de qualidade
-# print('U\n',U)
-# print('V\n',V)
+
+
+if n_gl == 2:
+    print('\n# Deslocamentos por nó #\n [x] [y]\n',V)
+else:
+    print('\n# Deslocamentos por nó #\n [x] [y] [z]\n',V)
 
 # Calculo do sistema deformado----------------------------------------------------
 
@@ -259,21 +270,31 @@ for i in range(size_inci):
     xJ = coord[0][noJ]
     yI = coord[1][noI]
     yJ = coord[1][noJ]
-    l = np.sqrt((xJ-xI)**2 + (yJ-yI)**2)
-    cos_theta = (xJ-xI)/l
-    sin_theta = (yJ-yI)/l
-    sigma_e = -cos_theta*V[noI][0] - sin_theta*V[noI][1] + cos_theta*V[noJ][0] + sin_theta*V[noJ][1]
+    if n_gl == 2:
+        l = np.sqrt((xJ-xI)**2 + (yJ-yI)**2)
+        cos_theta = (xJ-xI)/l
+        sin_theta = (yJ-yI)/l
+        sigma_e = -cos_theta*V[noI][0] - sin_theta*V[noI][1] + cos_theta*V[noJ][0] + sin_theta*V[noJ][1]
+    else:
+        zI = coord[2][noI]
+        zJ = coord[2][noJ]
+        l = np.sqrt((xJ-xI)**2 + (yJ-yI)**2 + (zJ-zI)**2)
+        c_x = (xJ-xI)/l
+        c_y = (yJ-yI)/l
+        c_z = (zJ-zI)/l
+        sigma_e = -c_x*V[noI][0] -c_y*V[noI][1] -c_z*V[noI][2] + c_x*V[noJ][0] + c_y*V[noJ][1] + c_z*V[noJ][2]
+
     Fe[i][0] = i + 1
-    Fe[i][1] = (E*A/l)*sigma_e
+    Fe[i][1] = ((E/l)*sigma_e)/1000
 
 # Controle de qualidade
 # print(Fe)
 
 if plt_q.lower() == 'y':
-    plt.title('Força em cada elemento')
+    plt.title('Tensão em cada elemento')
     plt.xlabel('N° do elemento')
-    plt.ylabel('Força em N')
-    plt.bar_label(plt.bar(Fe[:,0],Fe[:,1]))
+    plt.ylabel('Tensão [1e3]')
+    plt.bar_label(plt.bar(Fe[:,0],Fe[:,1],1))
     plt.show()
 
 # Plotagem de gráficos (Não implementado)-----------------------------------------
